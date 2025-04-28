@@ -14,6 +14,8 @@ RUN \
 
 # Install Arduino core for Uno
 RUN arduino-cli core install arduino:avr
+RUN arduino-cli config set network.connection_timeout 0
+RUN arduino-cli core install esp32:esp32
 
 # Add hello sketch
 RUN mkdir -p /sketches/hello
@@ -29,6 +31,7 @@ void loop() {
 }
 EOF
 
+
 # Compile hello sketch for Arduino Uno
 
 # Add servo library
@@ -38,53 +41,27 @@ RUN arduino-cli lib install Servo
 #RUN echo "dot_a_linkage=true" >> /root/Arduino/libraries/Servo/library.properties
 
 RUN arduino-cli compile --fqbn arduino:avr:uno /sketches/hello
+RUN \
+  apt-get -y update \
+  && apt-get -y install --no-install-recommends \
+  libexpat1 python3 \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
-
-# Compile hello sketch for Arduino Uno with Servo library
-
-RUN mkdir -p /sketches/servo
-COPY <<EOF /sketches/servo/servo.ino
-#include <Servo.h>
-Servo myServo; 
-void setup() {
-  Serial.begin(9600);
-  myServo.attach(9);
-  delay(1000);
-}
-void loop() {
-  Serial.println("Hello, Arduino!");
-  myServo.write(90);
-  delay(1000);
-}
-EOF
-RUN echo "hei4"
-RUN arduino-cli config set logging.level trace
-RUN arduino-cli compile --log-level trace -v --fqbn arduino:avr:uno /sketches/servo
-RUN arduino-cli compile --log-level trace -v --fqbn arduino:avr:uno /sketches/servo
-
-RUN mkdir -p /sketches/servo2
-COPY <<EOF /sketches/servo2/servo2.ino
-#include <Servo.h>
-Servo myServo; 
-void setup() {
-  Serial.begin(9600);
-  myServo.attach(9);
-  delay(1000);
-}
-void loop() {
-  Serial.println("Hello, Arduino!");
-  myServo.write(90);
-  delay(1000);
-}
-EOF
+RUN echo "hei2"
+COPY precompile.py /precompile.py
+RUN python3 -u /precompile.py esp32:esp32:esp32c6 ESP32Servo U8g2
+RUN python3 -u /precompile.py esp32:esp32:esp32c3 ESP32Servo U8g2
+RUN python3 -u /precompile.py arduino:avr:uno Servo U8g2
 
 RUN echo "hei4"
 
-RUN mkdir -p /root/.cache/arduino/sketches/DC194EB12F56A555113D984A86944D8F/libraries
-RUN cp -r /root/.cache/arduino/sketches/00D5792ADC117BF96770888FC77C2A5D/libraries /root/.cache/arduino/sketches/DC194EB12F56A555113D984A86944D8F
-RUN find /root/.cache/arduino/sketches/DC194EB12F56A555113D984A86944D8F/ -name "*.d" -exec sed -i 's/00D5792ADC117BF96770888FC77C2A5D/DC194EB12F56A555113D984A86944D8F/g' {} \;
+# Add compiler script
+COPY compile.sh /compile.sh
+RUN chmod +x /compile.sh
 
-RUN arduino-cli compile -v --fqbn arduino:avr:uno /sketches/servo2
+#RUN mkdir -p /root/.cache/arduino/sketches/DC194EB12F56A555113D984A86944D8F/libraries
+#RUN cp -r /root/.cache/arduino/sketches/00D5792ADC117BF96770888FC77C2A5D/libraries /root/.cache/arduino/sketches/DC194EB12F56A555113D984A86944D8F
+#RUN find /root/.cache/arduino/sketches/DC194EB12F56A555113D984A86944D8F/ -name "*.d" -exec sed -i 's/00D5792ADC117BF96770888FC77C2A5D/DC194EB12F56A555113D984A86944D8F/g' {} \;
 
-# Sketch cache is in /root/.cache/arduino/sketches/<md5_hash_of_sketch_path>
-# E.g. echo -n "/sketches/servo" | md5sum
+#RUN arduino-cli compile -v --fqbn arduino:avr:uno /sketches/servo2

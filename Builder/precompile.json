@@ -1,0 +1,13 @@
+{
+    "fqbn_cores": ["arduino:avr:uno", "esp32:esp32:esp32c6"],
+    "libraries": {
+        "arduino:avr:uno": [
+            "Servo",
+            "u8g2"
+        ],
+        "esp32:esp32:esp32c6": [
+            "ESP32Servo",
+            "u8g2"
+        ]
+    }
+}
