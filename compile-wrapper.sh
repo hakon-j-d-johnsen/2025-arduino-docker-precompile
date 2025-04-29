@@ -33,9 +33,9 @@ mkdir -p "$output_dir"
 
 echo "Compiling sketch: $sketch_name for board: $fqbn"
 
-# Run Docker container (compile.sh is the entrypoint)
+# Run Docker container (assuming it is compiled as arduino-docker-precompile)
 docker run --cpus=1 --rm \
   -v "$sketch_dir:/sketches/$sketch_name" \
   -v "$output_dir:/output" \
-  arduino-builder \
+  arduino-docker-precompile \
   "${flags[@]}" "$sketch_name" "$fqbn" "${libraries[@]}"
