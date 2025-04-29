@@ -25,11 +25,11 @@ mkdir -p "$OUTPUT_DIR"
 echo "Starting Docker container to compile sketch: $SKETCH_NAME for board: $FQBN"
 
 # Run Docker container for compilation
-docker run --rm \
+docker run --cpus=1 --rm \
   -v "$SKETCH_DIR:/sketches/$SKETCH_NAME" \
   -v "$OUTPUT_DIR:/output" \
   arduino-builder \
-  /compile.sh "$SKETCH_NAME" "$FQBN" $LIBRARIES
+  compile.sh "$SKETCH_NAME" "$FQBN" $LIBRARIES
 
 COMPILE_STATUS=$?
 

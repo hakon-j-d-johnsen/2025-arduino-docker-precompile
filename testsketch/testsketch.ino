@@ -1,5 +1,6 @@
-#include <Servo.h>
-Servo myServo; 
+//#include <ESP32Servo.h>
+//#include <ArduinoJson.h>
+/*Servo myServo; 
 void setup() {
   Serial.begin(9600);
   myServo.attach(9);
@@ -10,3 +11,6 @@ void loop() {
   myServo.write(90);
   delay(1000);
 }
+*/
+void setup() {}
+void loop() {}

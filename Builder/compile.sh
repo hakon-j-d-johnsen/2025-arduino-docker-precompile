@@ -12,43 +12,44 @@ if [ $# -lt 2 ]; then
   exit 1
 fi
 
-SKETCH_NAME="$1"
+ORIG_SKETCH_NAME="$1"
 FQBN="$2"
 LIBRARIES="${@:3}"
 
-echo "Compiling sketch with name $SKETCH_NAME"
+echo "Compiling sketch with orig name $ORIG_SKETCH_NAME (for $FQBN), with libraries $LIBRARIES"
 
-SKETCH_DIR="/sketches/$SKETCH_NAME"
+echo "Compiling sketch with name $ORIG_SKETCH_NAME"
+
+ORIG_SKETCH_DIR="/sketches/$ORIG_SKETCH_NAME"
 OUTPUT_DIR="/output"
 
-echo "Compiling sketch: $SKETCH_NAME for board: $FQBN"
+echo "Compiling sketch: $ORIG_SKETCH_NAME for board: $FQBN"
 
-# Install libraries if specified
+# Install libraries if specified # TODO: Properly array because library can have spaces
 if [ ! -z "$LIBRARIES" ]; then
   echo "Installing libraries: $LIBRARIES"
   arduino-cli lib install $LIBRARIES
 fi
+# Set mtime to 0 for all files in /root/Arduino/libraries
+echo "Setting mtime"
+find /root/Arduino/libraries -type f -exec touch -m -t 197001010000 {} \;
 
-# Try to use pre-compiled libraries if available
-echo "/root/precompile_sketches/$FQBN"
-CACHE_HASH=$(echo -n "/root/precompile_sketches/$FQBN" | md5sum | cut -d' ' -f1 | tr '[:lower:]' '[:upper:]')
-SKETCH_HASH=$(echo -n "$SKETCH_DIR" | md5sum | cut -d' ' -f1 | tr '[:lower:]' '[:upper:]')
+echo "Calculating hash"
+library_hash=$(arduino-cli lib list --format json | md5sum | awk '{print $1}')
+echo "Library hash: ${library_hash}"
 
-if [ -d "/root/.cache/arduino/sketches/$CACHE_HASH/libraries" ]; then
-  echo "Using pre-compiled libraries for $FQBN"
-  mkdir -p "/root/.cache/arduino/sketches/$SKETCH_HASH/libraries"
-  cp -r "/root/.cache/arduino/sketches/$CACHE_HASH/libraries"/* \
-       "/root/.cache/arduino/sketches/$SKETCH_HASH/libraries/"
-fi
+SKETCH_NAME="${FQBN}-${library_hash}"
+SKETCH_DIR="/tmp/${SKETCH_NAME}"
+echo "Using sketch dir $SKETCH_DIR. Does it exist? $(ls -la $SKETCH_DIR)"
+rm -rf "$SKETCH_DIR" || true
 
-# CACHE_HASH with SKETCH_HASH in all .d files
-find "/root/.cache/arduino/sketches/$SKETCH_HASH/libraries/" -type f -name "*.d" -exec sed -i "s/$CACHE_HASH/$SKETCH_HASH/g" {} \;
-
+cp -r "$ORIG_SKETCH_DIR" "$SKETCH_DIR"
+mv "$SKETCH_DIR/$ORIG_SKETCH_NAME.ino" "$SKETCH_DIR/$SKETCH_NAME.ino"
 
 # Compile the sketch
 arduino-cli compile \
   --fqbn "$FQBN" \
-  "$SKETCH_DIR" -v
+  "$SKETCH_DIR"
 
 
 COMPILE_STATUS=$?
@@ -59,6 +60,7 @@ if [ $COMPILE_STATUS -eq 0 ]; then
 else
   echo "Compilation failed with status $COMPILE_STATUS"
 fi
+SKETCH_HASH=$(echo -n "$SKETCH_DIR" | md5sum | cut -d' ' -f1 | tr '[:lower:]' '[:upper:]')
 cp "/root/.cache/arduino/sketches/$SKETCH_HASH/$SKETCH_NAME"* "$OUTPUT_DIR/"
 
 exit $COMPILE_STATUS
