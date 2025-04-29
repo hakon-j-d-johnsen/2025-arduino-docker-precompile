@@ -1,16 +1,32 @@
-//#include <ESP32Servo.h>
-//#include <ArduinoJson.h>
-/*Servo myServo; 
-void setup() {
-  Serial.begin(9600);
-  myServo.attach(9);
-  delay(1000);
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+#include <Wire.h>
+
+Adafruit_MPU6050 mpu;
+
+void setup(void) {
+  Serial.begin(115200);
+
+  while (!mpu.begin()) {
+    Serial.println("MPU6050 not connected!");
+    delay(1000);
+  }
+  Serial.println("MPU6050 ready!");
 }
+
+sensors_event_t event;
+
 void loop() {
-  Serial.println("Hello, Arduino!");
-  myServo.write(90);
-  delay(1000);
+  mpu.getAccelerometerSensor()->getEvent(&event);
+
+  Serial.print("[");
+  Serial.print(millis());
+  Serial.print("] X: ");
+  Serial.print(event.acceleration.x);
+  Serial.print(", Y: ");
+  Serial.print(event.acceleration.y);
+  Serial.print(", Z: ");
+  Serial.print(event.acceleration.z);
+  Serial.println(" m/s^2");
+  delay(500);
 }
-*/
-void setup() {}
-void loop() {}
