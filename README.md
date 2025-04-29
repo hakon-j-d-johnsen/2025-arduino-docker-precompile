@@ -52,6 +52,10 @@ Global variables use 15484 bytes (4%) of dynamic memory, leaving 312196 bytes fo
 - Core cache: 13.56 s
 - Full cache: 4.72 s
 
+**Specifying which library combinations to precompile**
+
+This is done by specifying libraries and headers to include (to make arduino-cli include the respective libraries) in `arduino-docker-precompile/precompile-libraries.py`.
+
 ## How it works
 
 In the dockerfile, we precompile some cores and libraries, simply by compiling them (while being smart with the sketch name for different library combinations). If we then use the same docker image to compile a sketch using the same fqbn and library combination, the cache will be used automatically.
