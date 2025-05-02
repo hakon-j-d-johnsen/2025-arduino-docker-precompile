@@ -48,3 +48,6 @@ arduino-cli compile  \
     --fqbn "${fqbn}" \
     --output-dir "/output" \
     "${sketch_dir}"
+
+# Clean up sketch directory
+rm -rf "${sketch_dir}"

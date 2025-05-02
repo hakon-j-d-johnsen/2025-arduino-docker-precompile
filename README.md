@@ -5,6 +5,8 @@ This is a proof of concept for pre-compiling Arduino cores and libraries using a
 
 Precompiling and caching a core is trivial - just compile an empty sketch for the fqbn, and arduino-cli already stores it in its cache shared among all future sketches. (However, we need to compile without using `--build-path`, otherwise arduino-cli disables its default builtin cache.)
 
+The cache is stored in `~/.cache/arduino/cores`, and automatically arduino-cli takes care of everything.
+
 **Library precompilation**
 
 Precompiling and caching a library is a bit more involved, because the builtin Arduino caching logic only caches compiled libraries local to a sketch name. Library caches are not shared across sketches. Additionally, each library is compiled with all other installed libraries in its include path, so any combination of installed libraries can potentially affect each other intentionally or unintentionally.
@@ -12,6 +14,8 @@ Precompiling and caching a library is a bit more involved, because the builtin A
 We can utilize this functionality to make a simple cache: We give our sketch a special name before compiling it, depedning on the fqbn and a hash of all installed libraries (with their version). This way, we will have a unique set of separate caches for each library combination for each fqbn.
 
 This cache can be used both for precompilation (if we compile sketches with the specific libraries and fqbn during docker build), and for regular caching (if the same instance keeps running to compile multiple sketches).
+
+**Technical details**: arduino-cli stores compiled object files (and corresponding .d files) in `~/.cache/arduino/<uppercase md5sum of full library path without trailing slash>/libraries`. There is no direct keying on library version, but reinstalling a library will invalidate the cache because the mtime of the source files in the library will be newer than the mtime of the object files. What we are doing here is to use the sketch name to explicitly key the cache on exactly library versions and combinations (as well as fqbn). Then we can safely reset the mtime of the library sorce files, so that we get a persistent cache for each library combination.
 
 ## How to test
 
