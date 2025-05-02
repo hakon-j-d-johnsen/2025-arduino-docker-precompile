@@ -32,9 +32,11 @@ RUN precompile-cores.sh arduino:avr:uno esp32:esp32:esp32c3 esp32:esp32:esp32s3 
 
 # Now let's precompile some library combinations.
 # This is much more granular, we compile specific combinations of core and set of library.
-# THe python script loops through some few combinations of core and library.
 COPY --chmod=755 precompile-libraries.py /bin/precompile-libraries.py
-RUN precompile-libraries.py
+RUN \
+  precompile-libraries.py esp32:esp32:esp32c6 --libraries "Adafruit MPU6050" "ArduinoJson" --includes "Adafruit_MPU6050.h" "ArduinoJson.h" \
+  && precompile-libraries.py esp32:esp32:esp32c6 --libraries "Adafruit MPU6050" --includes "Adafruit_MPU6050.h"
+
 # Add compilation script into the docker image
 COPY --chmod=755 compile.sh /bin/compile.sh
 ENTRYPOINT ["/bin/compile.sh"]

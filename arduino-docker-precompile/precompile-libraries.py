@@ -1,5 +1,5 @@
 #!/usr/bin/env -S python3 -u
-import sys, subprocess, hashlib, shutil, itertools
+import sys, subprocess, hashlib, shutil, argparse
 from pathlib import Path
 
 def precompile(fqbn, libraries, includes):
@@ -33,19 +33,25 @@ def precompile(fqbn, libraries, includes):
     shutil.rmtree("/root/Arduino/libraries", ignore_errors=True)
     shutil.rmtree(sketch_dir, ignore_errors=True)
 
-# For now, we just precompile a specific combination:
-precompile("esp32:esp32:esp32c6", ["Adafruit MPU6050"], ["Adafruit_MPU6050.h"])
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Precompile Arduino libraries for a board.')
+    parser.add_argument('fqbn', help='Fully qualified board name (e.g., esp32:esp32:esp32c6)')
+    parser.add_argument('--libraries', nargs='+', help='List of libraries to install')
+    parser.add_argument('--includes', nargs='+', help='List of header files to include to make arduino-cli compile the libraries', default=[])
+    
+    args = parser.parse_args()
+    precompile(args.fqbn, args.libraries, args.includes)
 
-# Example of how we could prebuild some libraries for some ESP32 boards by choosing multiple combinations
-#for fqbn in ["esp32:esp32:esp32c6", "esp32:esp32:esp32s3"]: 
-#    popular_library_data = [
-#        ("U8g2", "U8g2lib.h"),
-#        ("FastLED", "FastLED.h"),
-#        ("Adafruit MPU6050", "Adafruit_MPU6050.h"),
-#    ]
-#    # Let's select any combination of 1 or 2 libraries from the list to precompile
-#    for n in range(1, 3):
-#        for libraries in itertools.combinations(popular_library_data, n):
-#            library_names = [lib[0] for lib in libraries]
-#            library_includes = [lib[1] for lib in libraries]
-#            precompile(fqbn, library_names, library_includes)
+    # Example of how we could prebuild some libraries for some ESP32 boards by choosing multiple combinations
+    #for fqbn in ["esp32:esp32:esp32c6", "esp32:esp32:esp32s3"]: 
+    #    popular_library_data = [
+    #        ("U8g2", "U8g2lib.h"),
+    #        ("FastLED", "FastLED.h"),
+    #        ("Adafruit MPU6050", "Adafruit_MPU6050.h"),
+    #    ]
+    #    # Let's select any combination of 1 or 2 libraries from the list to precompile
+    #    for n in range(1, 3):
+    #        for libraries in itertools.combinations(popular_library_data, n):
+    #            library_names = [lib[0] for lib in libraries]
+    #            library_includes = [lib[1] for lib in libraries]
+    #            precompile(fqbn, library_names, library_includes)
